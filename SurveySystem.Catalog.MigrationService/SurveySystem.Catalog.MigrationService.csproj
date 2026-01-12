@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-SurveySystem.Catalog.MigrationService-2f8ddee9-ee1c-46dc-bfbf-fa183de37889</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SurveySystem.Catalog.Infrastructure\SurveySystem.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\SurveySystem.ServiceDefaults\SurveySystem.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

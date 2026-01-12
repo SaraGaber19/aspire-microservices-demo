@@ -1,0 +1,20 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "reporting-api-config"
+  labels:
+    app.kubernetes.io/name: "surveysystem-apphost"
+    app.kubernetes.io/component: "reporting-api"
+    app.kubernetes.io/instance: "{{.Release.Name}}"
+data:
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "{{ .Values.config.reporting_api.OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES }}"
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "{{ .Values.config.reporting_api.OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES }}"
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "{{ .Values.config.reporting_api.OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY }}"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "{{ .Values.config.reporting_api.ASPNETCORE_FORWARDEDHEADERS_ENABLED }}"
+  HTTP_PORTS: "{{ .Values.config.reporting_api.HTTP_PORTS }}"
+  REPORTING_REDIS_DB_HOST: "{{ .Values.config.reporting_api.REPORTING_REDIS_DB_HOST }}"
+  REPORTING_REDIS_DB_PORT: "{{ .Values.config.reporting_api.REPORTING_REDIS_DB_PORT }}"
+  RABBIT_MQ_HOST: "{{ .Values.config.reporting_api.RABBIT_MQ_HOST }}"
+  RABBIT_MQ_PORT: "{{ .Values.config.reporting_api.RABBIT_MQ_PORT }}"
+  RABBIT_MQ_USERNAME: "{{ .Values.config.reporting_api.RABBIT_MQ_USERNAME }}"

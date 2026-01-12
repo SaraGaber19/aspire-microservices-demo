@@ -1,0 +1,99 @@
+parameters:
+  catalog_migrationservice:
+    catalog_migrationservice_image: "saragaber/catalog-migrationservice:latest"
+  catalog_api:
+    port_http: 8080
+    target_port_http: 5000
+    catalog_api_image: "saragaber/catalog-api:latest"
+  response_api:
+    port_http: 8080
+    target_port_http: 5000
+    response_api_image: "saragaber/response-api:latest"
+  reporting_api:
+    port_http: 8080
+    target_port_http: 5000
+    reporting_api_image: "saragaber/reporting-api:latest"
+secrets:
+  catalog_postgres_server:
+    catalog_postgres_server_password: "xW8!p4Jc7Rz9@Tf2QkB1"
+  response_mongo_server:
+    response_mongo_server_password: "M3u#P8qTd6!Zv1Ks0RnE"
+  rabbit_mq:
+    rabbit_mq_password: "aS9PLm2VXr7Wc4HTt8Pb"
+  reporting_redis_db:
+    reporting_redis_db_password: "Zp6@Vr3Kx1!Tf9Qe8NsD"
+config:
+  catalog_postgres_server:
+    POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+    POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    POSTGRES_USER: "postgres"
+  catalog_migrationservice:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    CATALOG_POSTGRES_DB_HOST: "catalog-postgres-server-service"
+    CATALOG_POSTGRES_DB_PORT: "5432"
+    CATALOG_POSTGRES_DB_USERNAME: "postgres"
+    CATALOG_POSTGRES_DB_JDBCCONNECTIONSTRING: "jdbc:postgresql://catalog-postgres-server-service:5432/catalog-postgres-db"
+    CATALOG_POSTGRES_DB_DATABASENAME: "catalog-postgres-db"
+  catalog_api:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    CATALOG_POSTGRES_DB_HOST: "catalog-postgres-server-service"
+    CATALOG_POSTGRES_DB_PORT: "5432"
+    CATALOG_POSTGRES_DB_USERNAME: "postgres"
+    CATALOG_POSTGRES_DB_JDBCCONNECTIONSTRING: "jdbc:postgresql://catalog-postgres-server-service:5432/catalog-postgres-db"
+    CATALOG_POSTGRES_DB_DATABASENAME: "catalog-postgres-db"
+  response_mongo_server:
+    MONGO_INITDB_ROOT_USERNAME: "admin"
+  rabbit_mq:
+    RABBITMQ_DEFAULT_USER: "guest"
+  response_api:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    RESPONSE_MONGO_DB_HOST: "response-mongo-server-service"
+    RESPONSE_MONGO_DB_PORT: "27017"
+    RESPONSE_MONGO_DB_USERNAME: "admin"
+    RESPONSE_MONGO_DB_AUTHENTICATIONDATABASE: "admin"
+    RESPONSE_MONGO_DB_AUTHENTICATIONMECHANISM: "SCRAM-SHA-256"
+    RESPONSE_MONGO_DB_DATABASENAME: "response-mongo-db"
+    RABBIT_MQ_HOST: "rabbit-mq-service"
+    RABBIT_MQ_PORT: "5672"
+    RABBIT_MQ_USERNAME: "guest"
+  reporting_api:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    REPORTING_REDIS_DB_HOST: "reporting-redis-db-service"
+    REPORTING_REDIS_DB_PORT: "6379"
+    RABBIT_MQ_HOST: "rabbit-mq-service"
+    RABBIT_MQ_PORT: "5672"
+    RABBIT_MQ_USERNAME: "guest"
+  gateway:
+    ASPNETCORE_ENVIRONMENT: "Production"
+    REVERSEPROXY__ROUTES__route0__MATCH__PATH: "/{**catchall}"
+    REVERSEPROXY__ROUTES__route0__CLUSTERID: "cluster_catalog-api"
+    REVERSEPROXY__ROUTES__route1__MATCH__METHODS__0: "GET"
+    REVERSEPROXY__ROUTES__route1__MATCH__METHODS__1: "POST"
+    REVERSEPROXY__ROUTES__route1__MATCH__METHODS__2: "PUT"
+    REVERSEPROXY__ROUTES__route1__MATCH__METHODS__3: "DELETE"
+    REVERSEPROXY__ROUTES__route1__MATCH__PATH: "/catalog/{**catch-all}"
+    REVERSEPROXY__ROUTES__route1__CLUSTERID: "cluster_catalog-api"
+    REVERSEPROXY__ROUTES__route1__TRANSFORMS__0__PathRemovePrefix: "/catalog"
+    REVERSEPROXY__ROUTES__route2__MATCH__METHODS__0: "GET"
+    REVERSEPROXY__ROUTES__route2__MATCH__METHODS__1: "POST"
+    REVERSEPROXY__ROUTES__route2__MATCH__PATH: "/responses/{**catch-all}"
+    REVERSEPROXY__ROUTES__route2__CLUSTERID: "cluster_response-api"
+    REVERSEPROXY__ROUTES__route2__TRANSFORMS__0__PathRemovePrefix: "/responses"
+    REVERSEPROXY__ROUTES__route3__MATCH__METHODS__0: "GET"
+    REVERSEPROXY__ROUTES__route3__MATCH__PATH: "/reports/{**catch-all}"
+    REVERSEPROXY__ROUTES__route3__CLUSTERID: "cluster_reporting-api"
+    REVERSEPROXY__ROUTES__route3__TRANSFORMS__0__PathRemovePrefix: "/reports"
+    REVERSEPROXY__CLUSTERS__cluster_catalog_api__DESTINATIONS__destination1__ADDRESS: "http://catalog-api-service:8080"
+    REVERSEPROXY__CLUSTERS__cluster_response_api__DESTINATIONS__destination1__ADDRESS: "http://response-api-service:8080"
+    REVERSEPROXY__CLUSTERS__cluster_reporting_api__DESTINATIONS__destination1__ADDRESS: "http://reporting-api-service:8080"

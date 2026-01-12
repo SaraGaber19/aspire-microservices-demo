@@ -1,0 +1,28 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "response-api-config"
+  labels:
+    app.kubernetes.io/name: "surveysystem-apphost"
+    app.kubernetes.io/component: "response-api"
+    app.kubernetes.io/instance: "{{.Release.Name}}"
+data:
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "{{ .Values.config.response_api.OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES }}"
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "{{ .Values.config.response_api.OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES }}"
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "{{ .Values.config.response_api.OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY }}"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "{{ .Values.config.response_api.ASPNETCORE_FORWARDEDHEADERS_ENABLED }}"
+  HTTP_PORTS: "{{ .Values.config.response_api.HTTP_PORTS }}"
+  RESPONSE_MONGO_DB_HOST: "{{ .Values.config.response_api.RESPONSE_MONGO_DB_HOST }}"
+  RESPONSE_MONGO_DB_PORT: "{{ .Values.config.response_api.RESPONSE_MONGO_DB_PORT }}"
+  RESPONSE_MONGO_DB_USERNAME: "{{ .Values.config.response_api.RESPONSE_MONGO_DB_USERNAME }}"
+  RESPONSE_MONGO_DB_AUTHENTICATIONDATABASE: "{{ .Values.config.response_api.RESPONSE_MONGO_DB_AUTHENTICATIONDATABASE }}"
+  RESPONSE_MONGO_DB_AUTHENTICATIONMECHANISM: "{{ .Values.config.response_api.RESPONSE_MONGO_DB_AUTHENTICATIONMECHANISM }}"
+  RESPONSE_MONGO_DB_DATABASENAME: "{{ .Values.config.response_api.RESPONSE_MONGO_DB_DATABASENAME }}"
+  CATALOG_API_HTTP: "{{ .Values.config.response_api.CATALOG_API_HTTP }}"
+  services__catalog-api__http__0: "{{ .Values.config.response_api.services__catalog_api__http__0 }}"
+  CATALOG_API_HTTPS: "{{ .Values.config.response_api.CATALOG_API_HTTPS }}"
+  services__catalog-api__https__0: "{{ .Values.config.response_api.services__catalog_api__https__0 }}"
+  RABBIT_MQ_HOST: "{{ .Values.config.response_api.RABBIT_MQ_HOST }}"
+  RABBIT_MQ_PORT: "{{ .Values.config.response_api.RABBIT_MQ_PORT }}"
+  RABBIT_MQ_USERNAME: "{{ .Values.config.response_api.RABBIT_MQ_USERNAME }}"

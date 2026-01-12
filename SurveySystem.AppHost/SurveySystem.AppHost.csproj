@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UserSecretsId>577da63b-23d5-41cb-ab2c-f65e9d8241c9</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aspire.Hosting.AppHost" />
+		<PackageReference Include="Aspire.Hosting.Docker" />
+		<PackageReference Include="Aspire.Hosting.Kubernetes" />
+		<PackageReference Include="Aspire.Hosting.MongoDB" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
+		<PackageReference Include="Aspire.Hosting.RabbitMQ" />
+		<PackageReference Include="Aspire.Hosting.Redis" />
+		<PackageReference Include="Aspire.Hosting.Yarp" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SurveySystem.Catalog.API\SurveySystem.Catalog.API.csproj" />
+		<ProjectReference Include="..\SurveySystem.Catalog.MigrationService\SurveySystem.Catalog.MigrationService.csproj" />
+		<ProjectReference Include="..\SurveySystem.CatalogAPI\SurveySystem.CatalogAPI.csproj" />
+		<ProjectReference Include="..\SurveySystem.Reporting.API\SurveySystem.Reporting.API.csproj" />
+		<ProjectReference Include="..\SurveySystem.Response.API\SurveySystem.Response.API.csproj" />
+	</ItemGroup>
+
+</Project>

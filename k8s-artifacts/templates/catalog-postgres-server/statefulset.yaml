@@ -1,0 +1,41 @@
+---
+apiVersion: "apps/v1"
+kind: "StatefulSet"
+metadata:
+  name: "catalog-postgres-server-statefulset"
+  labels:
+    app.kubernetes.io/name: "surveysystem-apphost"
+    app.kubernetes.io/component: "catalog-postgres-server"
+    app.kubernetes.io/instance: "{{.Release.Name}}"
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "surveysystem-apphost"
+        app.kubernetes.io/component: "catalog-postgres-server"
+        app.kubernetes.io/instance: "{{.Release.Name}}"
+    spec:
+      containers:
+        - image: "docker.io/library/postgres:17.6"
+          name: "catalog-postgres-server"
+          envFrom:
+            - configMapRef:
+                name: "catalog-postgres-server-config"
+            - secretRef:
+                name: "catalog-postgres-server-secrets"
+          ports:
+            - name: "tcp"
+              protocol: "TCP"
+              containerPort: 5432
+          imagePullPolicy: "IfNotPresent"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "surveysystem-apphost"
+      app.kubernetes.io/component: "catalog-postgres-server"
+      app.kubernetes.io/instance: "{{.Release.Name}}"
+  replicas: 1
+  persistentVolumeClaimRetentionPolicy: {}
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: "RollingUpdate"

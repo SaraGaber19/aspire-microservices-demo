@@ -1,0 +1,218 @@
+services:
+  docker-env-dashboard:
+    image: "mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest"
+    ports:
+      - "18888"
+    expose:
+      - "18889"
+      - "18890"
+    networks:
+      - "aspire"
+    restart: "always"
+  catalog-postgres-server:
+    image: "docker.io/library/postgres:17.6"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${CATALOG_POSTGRES_SERVER_PASSWORD}"
+    expose:
+      - "5432"
+    networks:
+      - "aspire"
+  catalog-migrationservice:
+    image: "${CATALOG_MIGRATIONSERVICE_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ConnectionStrings__catalog-postgres-db: "Host=catalog-postgres-server;Port=5432;Username=postgres;Password=${CATALOG_POSTGRES_SERVER_PASSWORD};Database=catalog-postgres-db"
+      CATALOG_POSTGRES_DB_HOST: "catalog-postgres-server"
+      CATALOG_POSTGRES_DB_PORT: "5432"
+      CATALOG_POSTGRES_DB_USERNAME: "postgres"
+      CATALOG_POSTGRES_DB_PASSWORD: "${CATALOG_POSTGRES_SERVER_PASSWORD}"
+      CATALOG_POSTGRES_DB_URI: "postgresql://postgres:${CATALOG_POSTGRES_SERVER_PASSWORD}@catalog-postgres-server:5432/catalog-postgres-db"
+      CATALOG_POSTGRES_DB_JDBCCONNECTIONSTRING: "jdbc:postgresql://catalog-postgres-server:5432/catalog-postgres-db"
+      CATALOG_POSTGRES_DB_DATABASENAME: "catalog-postgres-db"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "catalog-migrationservice"
+    depends_on:
+      catalog-postgres-server:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  catalog-api:
+    image: "${CATALOG_API_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${CATALOG_API_PORT}"
+      ConnectionStrings__catalog-postgres-db: "Host=catalog-postgres-server;Port=5432;Username=postgres;Password=${CATALOG_POSTGRES_SERVER_PASSWORD};Database=catalog-postgres-db"
+      CATALOG_POSTGRES_DB_HOST: "catalog-postgres-server"
+      CATALOG_POSTGRES_DB_PORT: "5432"
+      CATALOG_POSTGRES_DB_USERNAME: "postgres"
+      CATALOG_POSTGRES_DB_PASSWORD: "${CATALOG_POSTGRES_SERVER_PASSWORD}"
+      CATALOG_POSTGRES_DB_URI: "postgresql://postgres:${CATALOG_POSTGRES_SERVER_PASSWORD}@catalog-postgres-server:5432/catalog-postgres-db"
+      CATALOG_POSTGRES_DB_JDBCCONNECTIONSTRING: "jdbc:postgresql://catalog-postgres-server:5432/catalog-postgres-db"
+      CATALOG_POSTGRES_DB_DATABASENAME: "catalog-postgres-db"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "catalog-api"
+    expose:
+      - "${CATALOG_API_PORT}"
+    depends_on:
+      catalog-migrationservice:
+        condition: "service_completed_successfully"
+    networks:
+      - "aspire"
+  response-mongo-server:
+    image: "docker.io/library/mongo:8.2"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "admin"
+      MONGO_INITDB_ROOT_PASSWORD: "${RESPONSE_MONGO_SERVER_PASSWORD}"
+    expose:
+      - "27017"
+    networks:
+      - "aspire"
+  rabbit-mq:
+    image: "docker.io/library/rabbitmq:4.2"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "${RABBIT_MQ_PASSWORD}"
+    expose:
+      - "5672"
+    networks:
+      - "aspire"
+  response-api:
+    image: "${RESPONSE_API_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${RESPONSE_API_PORT}"
+      ConnectionStrings__response-mongo-db: "mongodb://admin:${RESPONSE_MONGO_SERVER_PASSWORD}@response-mongo-server:27017/response-mongo-db?authSource=admin&authMechanism=SCRAM-SHA-256"
+      RESPONSE_MONGO_DB_HOST: "response-mongo-server"
+      RESPONSE_MONGO_DB_PORT: "27017"
+      RESPONSE_MONGO_DB_USERNAME: "admin"
+      RESPONSE_MONGO_DB_PASSWORD: "${RESPONSE_MONGO_SERVER_PASSWORD}"
+      RESPONSE_MONGO_DB_AUTHENTICATIONDATABASE: "admin"
+      RESPONSE_MONGO_DB_AUTHENTICATIONMECHANISM: "SCRAM-SHA-256"
+      RESPONSE_MONGO_DB_URI: "mongodb://admin:${RESPONSE_MONGO_SERVER_PASSWORD}@response-mongo-server:27017/response-mongo-db?authSource=admin&authMechanism=SCRAM-SHA-256"
+      RESPONSE_MONGO_DB_DATABASENAME: "response-mongo-db"
+      CATALOG_API_HTTP: "http://catalog-api:${CATALOG_API_PORT}"
+      services__catalog-api__http__0: "http://catalog-api:${CATALOG_API_PORT}"
+      CATALOG_API_HTTPS: "https://catalog-api:${CATALOG_API_PORT}"
+      ConnectionStrings__rabbit-mq: "amqp://guest:${RABBIT_MQ_PASSWORD}@rabbit-mq:5672"
+      RABBIT_MQ_HOST: "rabbit-mq"
+      RABBIT_MQ_PORT: "5672"
+      RABBIT_MQ_USERNAME: "guest"
+      RABBIT_MQ_PASSWORD: "${RABBIT_MQ_PASSWORD}"
+      RABBIT_MQ_URI: "amqp://guest:${RABBIT_MQ_PASSWORD}@rabbit-mq:5672"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "response-api"
+    expose:
+      - "${RESPONSE_API_PORT}"
+    depends_on:
+      response-mongo-server:
+        condition: "service_started"
+      catalog-api:
+        condition: "service_started"
+      rabbit-mq:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  reporting-redis-db:
+    image: "docker.io/library/redis:8.2"
+    command:
+      - "-c"
+      - "redis-server --requirepass $$REDIS_PASSWORD"
+    entrypoint:
+      - "/bin/sh"
+    environment:
+      REDIS_PASSWORD: "${REPORTING_REDIS_DB_PASSWORD}"
+    expose:
+      - "6379"
+    networks:
+      - "aspire"
+  reporting-api:
+    image: "${REPORTING_API_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${REPORTING_API_PORT}"
+      ConnectionStrings__reporting-redis-db: "reporting-redis-db:6379,password=${REPORTING_REDIS_DB_PASSWORD}"
+      REPORTING_REDIS_DB_HOST: "reporting-redis-db"
+      REPORTING_REDIS_DB_PORT: "6379"
+      REPORTING_REDIS_DB_PASSWORD: "${REPORTING_REDIS_DB_PASSWORD}"
+      REPORTING_REDIS_DB_URI: "redis://:${REPORTING_REDIS_DB_PASSWORD}@reporting-redis-db:6379"
+      ConnectionStrings__rabbit-mq: "amqp://guest:${RABBIT_MQ_PASSWORD}@rabbit-mq:5672"
+      RABBIT_MQ_HOST: "rabbit-mq"
+      RABBIT_MQ_PORT: "5672"
+      RABBIT_MQ_USERNAME: "guest"
+      RABBIT_MQ_PASSWORD: "${RABBIT_MQ_PASSWORD}"
+      RABBIT_MQ_URI: "amqp://guest:${RABBIT_MQ_PASSWORD}@rabbit-mq:5672"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "reporting-api"
+    expose:
+      - "${REPORTING_API_PORT}"
+    depends_on:
+      reporting-redis-db:
+        condition: "service_started"
+      rabbit-mq:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  gateway:
+    image: "mcr.microsoft.com/dotnet/nightly/yarp:2.3.0-preview.4"
+    command:
+      - "/app/yarp.dll"
+    entrypoint:
+      - "dotnet"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      CATALOG_API_HTTP: "http://catalog-api:${CATALOG_API_PORT}"
+      REVERSEPROXY__ROUTES__route0__MATCH__METHODS__0: "GET"
+      REVERSEPROXY__ROUTES__route0__MATCH__METHODS__1: "POST"
+      REVERSEPROXY__ROUTES__route0__MATCH__METHODS__2: "PUT"
+      REVERSEPROXY__ROUTES__route0__MATCH__METHODS__3: "DELETE"
+      REVERSEPROXY__ROUTES__route0__MATCH__PATH: "/catalog/{**catch-all}"
+      REVERSEPROXY__ROUTES__route0__CLUSTERID: "cluster_catalog-api"
+      REVERSEPROXY__ROUTES__route0__TRANSFORMS__0__PathRemovePrefix: "/catalog"
+      REVERSEPROXY__ROUTES__route1__MATCH__METHODS__0: "GET"
+      REVERSEPROXY__ROUTES__route1__MATCH__METHODS__1: "POST"
+      REVERSEPROXY__ROUTES__route1__MATCH__PATH: "/responses/{**catch-all}"
+      REVERSEPROXY__ROUTES__route1__CLUSTERID: "cluster_response-api"
+      REVERSEPROXY__ROUTES__route1__TRANSFORMS__0__PathRemovePrefix: "/responses"
+      REVERSEPROXY__ROUTES__route2__MATCH__METHODS__0: "GET"
+      REVERSEPROXY__ROUTES__route2__MATCH__PATH: "/reports/{**catch-all}"
+      REVERSEPROXY__ROUTES__route2__CLUSTERID: "cluster_reporting-api"
+      REVERSEPROXY__ROUTES__route2__TRANSFORMS__0__PathRemovePrefix: "/reports"
+      REVERSEPROXY__CLUSTERS__cluster_catalog-api__DESTINATIONS__destination1__ADDRESS: "https+http://catalog-api"
+      REVERSEPROXY__CLUSTERS__cluster_response-api__DESTINATIONS__destination1__ADDRESS: "https+http://response-api"
+      REVERSEPROXY__CLUSTERS__cluster_reporting-api__DESTINATIONS__destination1__ADDRESS: "https+http://reporting-api"
+      services__catalog-api__http__0: "http://catalog-api:${CATALOG_API_PORT}"
+      CATALOG_API_HTTPS: "https://catalog-api:${CATALOG_API_PORT}"
+      RESPONSE_API_HTTP: "http://response-api:${RESPONSE_API_PORT}"
+      services__response-api__http__0: "http://response-api:${RESPONSE_API_PORT}"
+      RESPONSE_API_HTTPS: "https://response-api:${RESPONSE_API_PORT}"
+      REPORTING_API_HTTP: "http://reporting-api:${REPORTING_API_PORT}"
+      services__reporting-api__http__0: "http://reporting-api:${REPORTING_API_PORT}"
+      REPORTING_API_HTTPS: "https://reporting-api:${REPORTING_API_PORT}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "gateway"
+    expose:
+      - "5000"
+    networks:
+      - "aspire"
+networks:
+  aspire:
+    driver: "bridge"

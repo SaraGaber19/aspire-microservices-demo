@@ -1,0 +1,11 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "response-mongo-server-config"
+  labels:
+    app.kubernetes.io/name: "surveysystem-apphost"
+    app.kubernetes.io/component: "response-mongo-server"
+    app.kubernetes.io/instance: "{{.Release.Name}}"
+data:
+  MONGO_INITDB_ROOT_USERNAME: "{{ .Values.config.response_mongo_server.MONGO_INITDB_ROOT_USERNAME }}"
